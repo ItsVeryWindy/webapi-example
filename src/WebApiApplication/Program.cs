@@ -18,7 +18,6 @@ namespace WebApiApplication
 
             using (WebApp.Start<Startup>(url: baseAddress))
             {
-                // Create HttpCient and make a request to api/values 
                 var client = new HttpClient();
 
                 var response = client.GetAsync(baseAddress + "hello/test").Result;
