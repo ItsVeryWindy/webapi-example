@@ -29,8 +29,6 @@ namespace WebApiApplication
             Console.ReadLine();
         }
 
-        public static ConditionalWeakTable<HttpRequestMessage, string> Params = new ConditionalWeakTable<HttpRequestMessage, string>();
-
         public class Startup
         {
             public void Configuration(IAppBuilder app)
@@ -72,14 +70,10 @@ namespace WebApiApplication
             var myContext = di.GetService(typeof(MyContext)) as MyContext;
 
             var owinContext = context.Request.GetOwinContext().Get<string>("myparam");
-
-            string wct;
-
-            Program.Params.TryGetValue(context.Request, out wct);
-
+            
             Console.WriteLine("Parameter from DI: {0}", myContext.Param);
             Console.WriteLine("Parameter from OwinContext: {0}", owinContext);
-            Console.WriteLine("Parameter from WCT: {0}", wct);
+            Console.WriteLine("Parameter from WCT: {0}", context.Request.GetParam());
             Console.WriteLine("Parameter from Route Data: {0}", context.RequestContext.RouteData.Values["param"]);
         }
     }
@@ -98,10 +92,30 @@ namespace WebApiApplication
         {
             _context.Param = param;
             Request.GetOwinContext().Set("myparam", param);
-            Program.Params.Add(Request, param);
+            Request.SetParam(param);
 
             throw new Exception();
         }
 
+    }
+
+    public static class RequestExtensions
+    {
+        private static ConditionalWeakTable<HttpRequestMessage, string> _params = new ConditionalWeakTable<HttpRequestMessage, string>();
+
+        public static void SetParam(this HttpRequestMessage request, string value)
+        {
+            _params.Add(request, value);
+        }
+
+        public static string GetParam(this HttpRequestMessage request)
+        {
+            string value;
+
+            if (!_params.TryGetValue(request, out value))
+                return null;
+
+            return value;
+        }
     }
 }
